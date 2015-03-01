@@ -2,10 +2,6 @@ package simulators.epidemy
 
 class EpidemySimulator extends Simulator {
 
-  private var day = 1
-
-  def currentDay: Int = day
-
   val people: List[Person] = distribute()
   val rooms: List[Room] = createRooms()
 

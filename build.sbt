@@ -24,10 +24,11 @@ libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.5"
 
 libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.5"
 
-libraryDependencies += "com.squareup.retrofit" % "retrofit" % "1.0.0"
+libraryDependencies += "com.squareup.retrofit" % "retrofit" % "1.9.0"
 
 libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.10.2"
 
+libraryDependencies += "org.scala-lang.modules" %% "scala-async" % "0.9.2"
 
 // This setting defines the project to which a solution is submitted. When creating a
 // handout, the 'createHandout' task will make sure that its value is correct.
