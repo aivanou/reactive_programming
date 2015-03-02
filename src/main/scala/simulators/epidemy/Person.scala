@@ -21,7 +21,17 @@ class Person(pid: Int, rm: Room, state: HealthState.State) {
   def getDaysBeenSick = sickDays
 
   private var roomChangedEvents: List[Action] = List()
-  private var healthChangedEvents: Map[HealthState.State, List[Action]] = Map()
+  private var healthChangedEvents: Map[HealthState.State, List[Action]] = fill()
+
+  def fill(): Map[HealthState.State, List[Action]] = {
+    return Map(
+      HealthState.Healthy -> List[Action](),
+      HealthState.Dead -> List[Action](),
+      HealthState.Immune -> List[Action](),
+      HealthState.Incubation -> List[Action](),
+      HealthState.Infected -> List[Action]()
+    )
+  }
 
   def getPosition: Room = room
 
