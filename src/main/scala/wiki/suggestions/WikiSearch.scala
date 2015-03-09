@@ -7,10 +7,11 @@ import retrofit.http._
 
 import concurrent.Promise
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.async.Async._
+import scala.collection.JavaConverters._
 
-/**
- * Created by aliaksandr on 3/1/15.
- */
+
 object WikiSearch {
 
   class Page {
@@ -38,7 +39,6 @@ object WikiSearch {
   }
 
   def callbackFuture[T](): (Future[T], Callback[T]) = {
-
     val p = Promise[T]()
     val cb = new Callback[T] {
 
@@ -50,26 +50,46 @@ object WikiSearch {
         p failure error
       }
     }
-
     return (p.future, cb)
   }
 
-  def main(args: Array[String]) = {
-    val restAdapter = new RestAdapter.Builder().setEndpoint("http://en.wikipedia.org").build()
-    val service = restAdapter.create(classOf[WikiService])
-
-    val cb = new Callback[Page] {
-      override def success(t: Page, response: Response): Unit = {
-        println(t.parse.title)
-        println(t.parse.text.all)
+  def wikiPageImpl(page: String, service: WikiService): Future[String] = {
+    async {
+      println("getting page: " + page)
+      val (ft, cb) = callbackFuture[Page]
+      service.page(page, cb)
+      val result = await {
+        ft
       }
-
-      override def failure(retrofitError: RetrofitError): Unit = {
-        println("BAAD :(  " + retrofitError.getUrl)
-      }
+      result.parse.text.all
     }
+  }
 
-    service.page("1", cb)
+  def wikiSugguestionsImpl(term: String, service: WikiService): Future[List[AnyRef]] = {
+    async {
+      println("searching: " + term)
+      val (ft, cb) = callbackFuture[Array[AnyRef]]
+      service.suggestions(term, cb)
+      val result = await {
+        ft
+      }
+      val arraylist = result(1).asInstanceOf[java.util.List[String]]
+      println("res: " + arraylist.asScala.toList.size)
+      arraylist.asScala.toList
+    }
+  }
+
+  val restAdapter = new RestAdapter.Builder().setEndpoint("http://en.wikipedia.org").build()
+  val service = restAdapter.create(classOf[WikiService])
+
+
+  def wikiSuggestions(term: String) = wikiSugguestionsImpl(term, service)
+
+  def wikiPage(page: String) = wikiPageImpl(page, service)
+
+  def main(args: Array[String]) = {
+
+    val rs = wikiSugguestionsImpl("test", service)
 
   }
 }

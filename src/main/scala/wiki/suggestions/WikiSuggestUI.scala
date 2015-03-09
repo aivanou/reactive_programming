@@ -1,12 +1,19 @@
 package wiki.suggestions
 
 
+import java.util.PriorityQueue
+import java.util.Scanner
+
+import rx.concurrency.NewThreadScheduler
+import rx.lang.scala._
+
+import collection.immutable.HashMap
 import scala.swing.event._
 import scala.collection.mutable.ListBuffer
 import scala.swing._
 import swing.Swing._
 import Orientation._
-
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object WikiSuggestUI extends SimpleSwingApplication {
 
@@ -74,7 +81,6 @@ object WikiSuggestUI extends SimpleSwingApplication {
       contents += status
     }
     var nClicks = 0
-    printOutTextFieldChanges(searchTermField)
     type Button = scala.swing.Button
 
     type ButtonClicked = scala.swing.event.ButtonClicked
@@ -91,9 +97,54 @@ object WikiSuggestUI extends SimpleSwingApplication {
     }
 
     val eventScheduler = Nil
+
+    val searchTerms: Observable[String] = Observable {
+      observer => {
+        searchTermField subscribe {
+          case ValueChanged(tf) => observer.onNext(searchTermField.text)
+          case _ => {}
+        }
+        Subscription {}
+      }
+    }
+
+    val suggestions: Observable[List[AnyRef]] = Observable {
+      observer => {
+        searchTerms.subscribe(
+          value => ObservableExt(WikiSearch.wikiSuggestions(value)).subscribe(v => observer.onNext(v)),
+          error => ObservableExt(WikiSearch.wikiSuggestions("error")),
+          () => observer.onCompleted()
+        )
+      }
+    }
+
+    val sch = Scheduler(NewThreadScheduler.getInstance())
+
+    val suggestionsSubscr: Subscription = suggestions.observeOn(sch) subscribe {
+      lst => {
+        val res = for (value <- lst) yield value.toString
+        suggestionList.listData = res
+      }
+    }
+
+//    val selectedPage: Observable[String] = Observable {
+//      observer => {
+//        button.subscribe {
+//          case ButtonClicked => observer.onNext(suggestionList.selection.items(0))
+//        }
+//        Subscription {}
+//      }
+//    }
+
+//    val suggestedPage: Observable[String] = Observable {
+//      observer => {
+//        selectedPage.subscribe(
+//          value => ObservableExt(WikiSearch.wikiPage(value)).subscribe(v => observer.onNext(v)),
+//          error => observer.onNext("Error"),
+//          () => observer.onCompleted()
+//        )
+//      }
+//    }
   }
 
-  def printOutTextFieldChanges(field: TextField) = field subscribe {
-    case ValueChanged(tf) => println(field.text)
-  }
 }

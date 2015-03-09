@@ -10,7 +10,7 @@ libraryDependencies += "org.scalatest" %% "scalatest" % "1.9.1" % "test"
 
 libraryDependencies += "junit" % "junit" % "4.10" % "test"
 
-libraryDependencies += "com.netflix.rxjava" % "rxjava-scala" % "0.14.6"
+libraryDependencies += "com.netflix.rxjava" % "rxjava-scala" % "0.15.1"
 
 libraryDependencies += "org.json4s" % "json4s-native_2.10" % "3.2.5"
 
@@ -30,6 +30,9 @@ libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.10.2"
 
 libraryDependencies += "org.scala-lang.modules" %% "scala-async" % "0.9.2"
 
+libraryDependencies += "com.ning" % "async-http-client" % "1.7.19"
+
+
 // This setting defines the project to which a solution is submitted. When creating a
 // handout, the 'createHandout' task will make sure that its value is correct.
 submitProjectName := "quickcheck"
@@ -40,6 +43,15 @@ libraryDependencies <++= (currentProject) { c =>
   )
   else Seq.empty
 }
+
+libraryDependencies <++= (currentProject) { c =>
+  if (c.isEmpty || c == "actorbintree") Seq(
+    "com.typesafe.akka" %% "akka-actor" % "2.2.3",
+    "com.typesafe.akka" %% "akka-testkit" % "2.2.3"
+  )
+  else Seq.empty
+}
+
 
 // See documentation in ProgFunBuild.scala
 projectDetailsMap := {
