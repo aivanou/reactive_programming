@@ -2,8 +2,8 @@ package simulators.epidemy
 
 class EpidemySimulator extends Simulator {
 
-  val people: List[Person] = distribute()
   val rooms: List[Room] = createRooms()
+  val people: List[Person] = distribute()
 
   def distribute(): List[Person] = {
     def assign(id: Int): List[Person] = {
@@ -18,9 +18,10 @@ class EpidemySimulator extends Simulator {
   }
 
   def assignInfected(): Unit = {
-    val ninfected = Util.config.population * Util.config.PREVALENCE_RATE / 100
-    for (_ <- 0 until ninfected) {
-      val p = Util.oneOf(people)
+    val ninfected = Util.config.population * 50 / 100
+    println("infected: " + ninfected)
+    for (i <- 0 until ninfected) {
+      val p = people(i)
       p.setHealthState(HealthState.Infected)
     }
   }
@@ -36,14 +37,67 @@ class EpidemySimulator extends Simulator {
     rms
   }
 
-  def tryMoveAction(person: Person) = {
-    afterDelay(0) {
-      if (Util.probability(20))
-        move(person)
+  def startSimulation(): Unit = {
+
+    assignInfected()
+    registerStates(people)
+    registerMoveActions(people, 10)
+    println("day: 1")
+    runEventsUntilTime(1)
+    println("after day 1: " + agenda.length)
+    println("day: 2")
+    runEventsUntilTime(2)
+    println("after day 2: " + agenda.length)
+    println("day: 3")
+    runEventsUntilTime(3)
+    println("after day 3: " + agenda.length)
+  }
+
+  def runEventsUntilTime(untilDay: Int): Unit = {
+    if (day <= untilDay) {
+      next
+      runEventsUntilTime(untilDay)
     }
   }
 
-  def move(person: Person): Unit = {
+  def registerStates(ppl: List[Person]): Unit = {
+    for (p <- ppl) {
+      logAction(p)
+      incubation(p)
+      infected(p)
+      immune(p)
+    }
+  }
+
+  def logAction(person: Person): Unit = {
+    for (v <- HealthState.values) {
+      person.addAction(v, () => {
+        println("person " + person.id + " health state: " + v)
+      })
+    }
+  }
+
+  def registerMoveActions(ppl: List[Person], days: Int): Unit = {
+    for (day <- 1 until days + 1) {
+      registerMoveAction(ppl, day)
+    }
+  }
+
+  def registerMoveAction(ppl: List[Person], day: Int): Unit = {
+    for (p <- ppl) {
+      registerMoveAction(p, day)
+    }
+  }
+
+  def registerMoveAction(person: Person, day: Int) = {
+    afterDelay(day) {
+      if (Util.probability(20))
+        tryMove(person)
+      dayAction(person)
+    }
+  }
+
+  def tryMove(person: Person): Unit = {
     val pt = person.getPosition.coordinates
     person.getPosition.removePerson(person)
     val newRoom = roomByCoords(rooms, newPosition(pt))
@@ -62,13 +116,9 @@ class EpidemySimulator extends Simulator {
     return null
   }
 
-  def healthy(person: Person): Unit = {
-    def dayAction(): Unit = {
-      afterDelay(1) {
-        if (person.getPosition.hasInfectious && Util.probability(Util.config.TRANSMISS)) {
-          person.setHealthState(HealthState.Incubation)
-        }
-      }
+  def dayAction(person: Person): Unit = {
+    if (person.getPosition.hasInfectious && Util.probability(Util.config.TRANSMISS)) {
+      person.setHealthState(HealthState.Incubation)
     }
   }
 

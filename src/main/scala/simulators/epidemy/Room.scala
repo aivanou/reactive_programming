@@ -2,7 +2,7 @@ package simulators.epidemy
 
 class Room(cr: Point) {
 
-  private var people: List[Person] = List()
+  var people: List[Person] = List()
 
   val coordinates: Point = cr
 
@@ -22,7 +22,11 @@ class Room(cr: Point) {
   def hasInfectious: Boolean = {
     for (p <- people)
       if (p.getHealthState == HealthState.Infected)
-        true
-    false
+        return true
+    return false
+  }
+
+  override def toString = {
+    "room: [" + cr.x + ":" + cr.y + "]: " + people.length + "  "
   }
 }

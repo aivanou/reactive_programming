@@ -6,11 +6,11 @@ abstract class Simulator {
 
   case class Event(day: Int, action: Action)
 
-  private var currentDay = 1
+  private var currentDay = 0
 
   def day = currentDay
 
-  private var agenda: List[Event] = List()
+  var agenda: List[Event] = List()
 
   def afterDelay(delay: Int)(action: => Unit): Unit = {
     val event = Event(day + delay, () => action)
